@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:domain/entities/event.dart';
-import 'package:domain/repositories/calendar_repository.dart';
+import 'package:domain/usecases/add_event_usecase.dart';
+import 'package:domain/usecases/get_events_usecase.dart';
 
 class CalendarState {
   final DateTime selectedDay;
@@ -28,14 +29,17 @@ class CalendarState {
 }
 
 class CalendarViewModel extends StateNotifier<CalendarState> {
-  final CalendarRepository _repository;
+  final GetEventsUseCase _getEvents;
+  final AddEventUseCase _addEvent;
 
-  CalendarViewModel(this._repository, CalendarState initialState) : super(initialState) {
-    _loadEvents();
+  CalendarViewModel(this._getEvents, this._addEvent, CalendarState initialState)
+      : super(initialState) {
+    loadEvents();
   }
 
-  Future<void> _loadEvents() async {
-    final eventsMap = await _repository.getEvents();
+  Future<void> loadEvents() async {
+    // GetEventsUseCase를 호출합니다.
+    final eventsMap = await _getEvents();
     if (mounted) {
       state = state.copyWith(events: eventsMap);
     }
@@ -48,10 +52,7 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
 
   void onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(state.selectedDay, selectedDay)) {
-      state = state.copyWith(
-        selectedDay: selectedDay,
-        focusedDay: focusedDay,
-      );
+      state = state.copyWith(selectedDay: selectedDay, focusedDay: focusedDay);
     }
   }
 
@@ -61,7 +62,7 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
 
   Future<void> addEvent(Event newEvent) async {
     final date = state.selectedDay;
-    await _repository.addEvent(date, newEvent);
-    await _loadEvents();
+    await _addEvent(date, newEvent);
+    await loadEvents();
   }
 }
