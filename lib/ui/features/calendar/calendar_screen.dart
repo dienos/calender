@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-import '../../../src/models/event.dart';
-import 'calendar_view_model.dart';
+import 'model/event.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(calendarViewModelProvider);
-    final viewModel = ref.read(calendarViewModelProvider.notifier);
-    final selectedEvents = viewModel.getEventsForDay(state.selectedDay);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('나의 Flutter 캘린더'),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _showAddEventDialog(context, viewModel);
         },
         child: const Icon(Icons.add),
       ),
@@ -30,11 +23,8 @@ class CalendarScreen extends ConsumerWidget {
             locale: 'ko_KR',
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: state.focusedDay,
-            selectedDayPredicate: (day) => isSameDay(state.selectedDay, day),
-            onDaySelected: viewModel.onDaySelected,
-            onPageChanged: viewModel.onPageChanged,
-            eventLoader: viewModel.getEventsForDay,
+            focusedDay: DateTime.utc(2030, 12, 31),
+            selectedDayPredicate: (day) => isSameDay(DateTime.utc(2030, 12, 31), day),
             headerStyle: const HeaderStyle(
               titleCentered: true,
               formatButtonVisible: false,
@@ -83,10 +73,8 @@ class CalendarScreen extends ConsumerWidget {
                   const SizedBox(height: 8.0),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: selectedEvents.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(selectedEvents[index].title),
                         );
                       },
                     ),
@@ -97,37 +85,6 @@ class CalendarScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showAddEventDialog(BuildContext context, CalendarViewModel viewModel) {
-    final textController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('이벤트 추가'),
-          content: TextField(
-            controller: textController,
-            decoration: const InputDecoration(hintText: '이벤트 내용을 입력하세요'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (textController.text.isNotEmpty) {
-                  viewModel.addEvent(Event(textController.text));
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('추가'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

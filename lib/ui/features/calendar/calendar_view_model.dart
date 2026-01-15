@@ -1,7 +1,7 @@
-import 'package:domain/event.dart';
-import 'package:domain/repository/event_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+import 'model/event.dart';
 
 class CalendarState {
   final DateTime selectedDay;
@@ -28,13 +28,7 @@ class CalendarState {
 }
 
 class CalendarViewModel extends StateNotifier<CalendarState> {
-  final EventRepository _repository;
-
-  CalendarViewModel(this._repository) : super(CalendarState(
-    selectedDay: DateTime.now(),
-    focusedDay: DateTime.now(),
-    events: _repository.loadEvents(),
-  ));
+  CalendarViewModel(super.state);
 
   List<Event> getEventsForDay(DateTime day) {
     return state.events[day] ?? [];
@@ -59,14 +53,6 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
 
     final newEventsMap = Map<DateTime, List<Event>>.from(state.events);
     newEventsMap[state.selectedDay] = updatedEventsForDay;
-
-    await _repository.saveEvents(newEventsMap);
-
     state = state.copyWith(events: newEventsMap);
   }
 }
-
-final calendarViewModelProvider = StateNotifierProvider<CalendarViewModel, CalendarState>((ref) {
-  final repository = ref.watch(eventRepositoryProvider);
-  return CalendarViewModel(repository);
-});

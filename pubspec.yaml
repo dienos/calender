@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   domain:
     path: ./domain
+  flutter_localizations:
+    sdk: flutter
 
   # Remote Packages
   cupertino_icons: ^1.0.8
