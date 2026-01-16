@@ -13,7 +13,14 @@ dependencies:
   domain:
     path: ../domain
 
+  floor: ^1.5.0
+  sqflite: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+  # For code generation within the data module
+  build_runner: ^2.4.10
+  floor_generator: ^1.5.0

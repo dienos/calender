@@ -26,15 +26,12 @@ class _AddMemoScreenState extends ConsumerState<AddMemoScreen> {
     super.dispose();
   }
 
-  // 1. _onSave 메소드를 async로 변경합니다.
   Future<void> _onSave() async {
     final text = _memoController.text;
     if (text.isNotEmpty) {
-      // 2. ViewModel의 addMemo 비동기 작업이 끝날 때까지 await로 기다립니다.
-      await ref.read(calendarViewModelProvider.notifier).addMemo(text);
+      // ViewModel의 addMemo 메소드를 호출할 때, 날짜 정보(widget.selectedDate)를 함께 전달합니다.
+      await ref.read(calendarViewModelProvider.notifier).addMemo(widget.selectedDate, text);
 
-      // 3. 작업이 모두 완료된 후, 화면을 빠져나갑니다.
-      // mounted 체크를 추가하여 위젯이 여전히 화면에 있는지 확인하는 것이 더 안전합니다.
       if (mounted) {
         Navigator.of(context).pop();
       }

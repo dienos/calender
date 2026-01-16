@@ -1,15 +1,31 @@
+import 'package:data/datasources/local/app_database.dart';
 import 'package:data/repositories/calendar_repository_impl.dart';
 import 'package:domain/repositories/calendar_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:domain/entities/memo_record.dart';
 import 'package:domain/usecases/add_event_usecase.dart';
 import 'package:domain/usecases/get_events_usecase.dart';
 import 'ui/features/calendar/calendar_view_model.dart';
 
+// --- Composition Root ---
 
-final calendarRepositoryProvider = Provider<CalendarRepository>((ref) {
-  return CalendarRepositoryImpl();
+// 0. 로컬 데이터베이스 인스턴스를 제공하는 Provider
+final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
+  return await $FloorAppDatabase.databaseBuilder('app_database.db').build();
 });
 
+// 1. Data -> Domain
+final calendarRepositoryProvider = Provider<CalendarRepository>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+
+  return database.when(
+    data: (db) => CalendarRepositoryImpl(db),
+    loading: () => CalendarRepositoryImpl(null),
+    error: (err, stack) => CalendarRepositoryImpl(null),
+  );
+});
+
+// 2. Repository -> UseCases
 final getEventsUseCaseProvider = Provider<GetEventsUseCase>((ref) {
   final repository = ref.watch(calendarRepositoryProvider);
   return GetEventsUseCase(repository);
@@ -20,6 +36,7 @@ final addEventUseCaseProvider = Provider<AddEventUseCase>((ref) {
   return AddEventUseCase(repository);
 });
 
+// 3. UseCases -> ViewModel
 final calendarViewModelProvider =
     StateNotifierProvider<CalendarViewModel, CalendarState>((ref) {
   final getEvents = ref.watch(getEventsUseCaseProvider);
