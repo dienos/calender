@@ -47,6 +47,48 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final calendarState = ref.watch(calendarViewModelProvider);
     final calendarViewModel = ref.read(calendarViewModelProvider.notifier);
 
+    final pageViewWidget = PageView.builder(
+      controller: _pageController,
+      onPageChanged: (index) {
+        final newSelectedDay = _firstDay.add(Duration(days: index));
+        if (!isSameDay(calendarState.selectedDay, newSelectedDay)) {
+          calendarViewModel.onDaySelected(newSelectedDay, newSelectedDay);
+        }
+      },
+      itemBuilder: (context, index) {
+        final date = _firstDay.add(Duration(days: index));
+        final events = calendarViewModel.getEventsForDay(date);
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${date.month}월 ${date.day}일엔 무슨 생각을 하였을까?',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8.0),
+              Expanded(
+                child: events.isEmpty
+                    ? const Center(child: Text('작성된 기록이 없습니다.'))
+                    : ListView.builder(
+                        itemCount: events.length,
+                        itemBuilder: (context, index) {
+                          final event = events[index];
+                          return ListTile(
+                            leading: const Icon(Icons.circle, size: 12),
+                            title: Text(event.title),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+      itemCount: _lastDay.difference(_firstDay).inDays + 1,
+    );
+
     return Scaffold(
       drawer: Drawer(
         child: ListView(
@@ -71,15 +113,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
         actions: [
-          // 3. '오늘' 버튼을 AppBar 오른쪽에 추가합니다.
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton(
+            child: IconButton(
               onPressed: _onTodayButtonPressed,
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
+              icon: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    color: Colors.black,
+                    size: 30,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5.0),
+                    child: Text(
+                      '${DateTime.now().day}',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Text('오늘: ${DateTime.now().day}일'),
             ),
           ),
         ],
@@ -88,9 +146,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         onPressed: () => calendarViewModel.addEvent(const Event('새로운 메모')),
         child: const Icon(Icons.add),
       ),
-      body: Column(
-        children: [
-          TableCalendar<Event>(
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          final calendarWidget = TableCalendar<Event>(
             locale: 'ko_KR',
             firstDay: _firstDay,
             lastDay: _lastDay,
@@ -139,51 +197,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 return null;
               },
             ),
-          ),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                final newSelectedDay = _firstDay.add(Duration(days: index));
-                if (!isSameDay(calendarState.selectedDay, newSelectedDay)) {
-                  calendarViewModel.onDaySelected(newSelectedDay, newSelectedDay);
-                }
-              },
-              itemBuilder: (context, index) {
-                final date = _firstDay.add(Duration(days: index));
-                final events = calendarViewModel.getEventsForDay(date);
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${date.month}월 ${date.day}일 기록',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8.0),
-                      Expanded(
-                        child: events.isEmpty
-                            ? const Center(child: Text('작성된 기록이 없습니다.'))
-                            : ListView.builder(
-                                itemCount: events.length,
-                                itemBuilder: (context, index) {
-                                  final event = events[index];
-                                  return ListTile(
-                                    leading: const Icon(Icons.circle, size: 12),
-                                    title: Text(event.title),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
+          );
+
+          if (orientation == Orientation.portrait) {
+            return Column(
+              children: [
+                calendarWidget,
+                Expanded(child: pageViewWidget),
+              ],
+            );
+          } else {
+            // 가로 모드에서 달력 부분을 Flexible로 감싸고, SingleChildScrollView를 사용합니다.
+            return Row(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: SingleChildScrollView(
+                    child: calendarWidget,
                   ),
-                );
-              },
-              itemCount: _lastDay.difference(_firstDay).inDays + 1,
-            ),
-          ),
-        ],
+                ),
+                Expanded(
+                  flex: 1,
+                  child: pageViewWidget
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
