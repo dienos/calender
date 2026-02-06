@@ -1,3 +1,4 @@
+import 'package:dienos_calendar/ui/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,12 +18,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Memo Calendar by dienos',
-      theme: ThemeData(
-        // 앱의 전체 테마 색상을 분홍색 톤으로 변경합니다.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
-        useMaterial3: true,
-      ),
+      title: 'Dienos Calendar',
+      theme: AppTheme.darkTheme, // Use the theme from the separate file
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
